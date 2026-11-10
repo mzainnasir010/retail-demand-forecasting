@@ -108,6 +108,7 @@ h1 { margin: 7px 0 4px; color: #24312a; font-family: "Segoe UI", Arial, sans-ser
 .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
 .legend-dot.actual { background: #4f8068; }
 .legend-line.forecast { width: 15px; height: 0; border-top: 2px dashed #c18b3f; }
+.legend-line.rolling { width: 15px; height: 0; border-top: 2px dashed #78899b; }
 .legend-band { width: 13px; height: 8px; border-radius: 2px; background: #dcece2; }
 .chart-wrap { height: 265px; margin: 5px -8px 0 -12px; }
 .chart-footnote { margin-top: 3px; padding-top: 9px; border-top: 1px solid #f0f1ec; color: #969c96; font-size: 9px; }
@@ -161,6 +162,24 @@ h1 { margin: 7px 0 4px; color: #24312a; font-family: "Segoe UI", Arial, sans-ser
 .report-figures figure { margin: 0; min-width: 0; border: 1px solid #e8e8e1; border-radius: 10px; overflow: hidden; background: #fff; }
 .report-figures img { display: block; width: 100%; height: auto; }
 .report-figures figcaption { padding: 10px 12px; color: #626960; font-size: 12px; text-transform: capitalize; }
+.prediction-panel { padding: 18px; }
+.model-badge { align-self: flex-start; border-radius: 999px; padding: 6px 9px; background: #f6efe4; color: #856a3d; font-size: 9px; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
+.model-badge.ready { background: #e8f2eb; color: #437459; }
+.prediction-form { display: grid; grid-template-columns: minmax(180px, 1fr) 125px minmax(220px, 1.2fr) auto auto; align-items: end; gap: 13px; }
+.prediction-model,.prediction-field { display: flex; min-width: 0; flex-direction: column; gap: 6px; color: #73786f; font-size: 11px; }
+.prediction-model strong { color: #2c342e; font-size: 15px; text-transform: capitalize; }
+.prediction-model small,.prediction-field small { color: #8a8e86; font-size: 10px; line-height: 1.5; }
+.prediction-field select,.prediction-field input { width: 100%; min-height: 39px; padding: 8px 10px; border: 1px solid #dedfd7; border-radius: 7px; background: #fff; color: #353b35; font: inherit; }
+.prediction-field input { padding: 7px; }
+.input-file-field > span { color: #73786f; }
+.template-link { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.prediction-submit { white-space: nowrap; }
+.prediction-submit:disabled { opacity: .55; cursor: not-allowed; }
+.prediction-help { margin: 14px 0 0; max-width: 940px; color: #777d75; font-size: 11px; line-height: 1.6; }
+.prediction-message { margin: 12px 0 0; font-size: 12px; line-height: 1.5; }
+.prediction-message.success { color: #3d7653; }
+.prediction-message.success a { margin-left: 8px; color: #345f44; font-weight: 700; text-underline-offset: 3px; }
+.prediction-message.error { color: #a34c3e; }
 .metric-card { min-height: 92px; display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 7px; background: white; }
 .metric-card span { color: #838c84; font-size: 9px; }
 .metric-card strong { color: #344238; font-family: "Segoe UI", Arial, sans-serif; font-size: 19px; letter-spacing: -.5px; }
@@ -192,6 +211,9 @@ h1 { margin: 7px 0 4px; color: #24312a; font-family: "Segoe UI", Arial, sans-ser
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; clip-path: inset(50%); }
 
 @media (max-width: 1120px) {
+  .prediction-form { grid-template-columns: minmax(150px, 1fr) 115px 1.3fr auto; }
+  .template-link { grid-column: 3; grid-row: 2; }
+  .prediction-submit { grid-column: 4; grid-row: 2; }
   .app-shell { grid-template-columns: 215px minmax(0,1fr); }
   .topbar { padding: 0 26px; }
   .page-content { padding: 25px 26px 22px; }
@@ -210,6 +232,8 @@ h1 { margin: 7px 0 4px; color: #24312a; font-family: "Segoe UI", Arial, sans-ser
 }
 @media (max-width: 620px) {
   .report-figures { grid-template-columns: 1fr; padding: 0 12px 12px; }
+  .prediction-form { grid-template-columns: 1fr; align-items: stretch; }
+  .template-link,.prediction-submit { grid-column: auto; grid-row: auto; }
   .app-shell { display: block; padding-bottom: 61px; }
   .sidebar { position: fixed; z-index: 20; inset: auto 0 0; width: 100%; min-height: 58px; height: 58px; flex-direction: row; justify-content: center; padding: 5px 10px; border-top: 1px solid rgb(255 255 255 / 12%); }
   .brand,.workspace-label,.sidebar-bottom { display: none; }

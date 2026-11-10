@@ -20,6 +20,7 @@ class ChartPoint(BaseModel):
     forecast: float | None = None
     lower: float | None = None
     upper: float | None = None
+    rolling_average: float | None = None
 
 
 class MetricResult(BaseModel):
@@ -51,6 +52,7 @@ class DashboardResponse(BaseModel):
     model_comparison: list[dict]
     rankings: list[dict]
     family_outlook: list[dict]
+    volatility: list[dict]
     figures: list[str]
     business_insights: dict
     run_metadata: dict

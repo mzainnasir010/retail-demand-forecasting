@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import date, timedelta
+from math import sqrt
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .models import DailyActual, ForecastPoint, ForecastRun
@@ -13,14 +14,16 @@ def latest_run(db: Session) -> ForecastRun:
 
 
 def entity_options(db: Session, run_id: int) -> dict:
+    run = db.get(ForecastRun, run_id)
+    actual_run_ids = [run_id, run.history_run_id] if run and run.history_run_id else [run_id]
     actual_stores = set(db.scalars(
-        select(DailyActual.store_nbr).where(DailyActual.run_id == run_id).distinct()
+        select(DailyActual.store_nbr).where(DailyActual.run_id.in_(actual_run_ids)).distinct()
     ).all())
     forecast_stores = set(db.scalars(
         select(ForecastPoint.store_nbr).where(ForecastPoint.run_id == run_id).distinct()
     ).all())
     actual_families = set(db.scalars(
-        select(DailyActual.family).where(DailyActual.run_id == run_id).distinct()
+        select(DailyActual.family).where(DailyActual.run_id.in_(actual_run_ids)).distinct()
     ).all())
     forecast_families = set(db.scalars(
         select(ForecastPoint.family).where(ForecastPoint.run_id == run_id).distinct()
@@ -34,7 +37,8 @@ def dashboard_data(
 ) -> dict:
     run = latest_run(db)
     horizon_days = max(1, min(horizon_days, 90, run.horizon_days))
-    actual_query = select(DailyActual).where(DailyActual.run_id == run.id)
+    actual_run_ids = [run.id, run.history_run_id] if run.history_run_id else [run.id]
+    actual_query = select(DailyActual).where(DailyActual.run_id.in_(actual_run_ids))
     forecast_query = select(ForecastPoint).where(ForecastPoint.run_id == run.id)
     if store_nbr is not None:
         actual_query = actual_query.where(DailyActual.store_nbr == store_nbr)
@@ -43,7 +47,7 @@ def dashboard_data(
         actual_query = actual_query.where(DailyActual.family == family)
         forecast_query = forecast_query.where(ForecastPoint.family == family)
 
-    latest_query = select(func.max(DailyActual.date)).where(DailyActual.run_id == run.id)
+    latest_query = select(func.max(DailyActual.date)).where(DailyActual.run_id.in_(actual_run_ids))
     if store_nbr is not None:
         latest_query = latest_query.where(DailyActual.store_nbr == store_nbr)
     if family is not None:
@@ -57,7 +61,7 @@ def dashboard_data(
         return _empty_dashboard(run, horizon_days, store_nbr, family, entity_options(db, run.id))
 
     by_date: dict[date, dict[str, float | None]] = defaultdict(
-        lambda: {"actual": None, "forecast": None, "lower": None, "upper": None}
+        lambda: {"actual": None, "forecast": None, "lower": None, "upper": None, "rolling_average": None}
     )
     for row in actuals:
         item = by_date[row.date]
@@ -75,6 +79,9 @@ def dashboard_data(
     selected_future = set(future_dates[:horizon_days])
     history_dates = sorted(d for d in by_date if latest_actual_date is not None and d <= latest_actual_date)
     history_dates = history_dates[-90:]
+    for index, day in enumerate(history_dates):
+        window = history_dates[max(0, index - 6):index + 1]
+        by_date[day]["rolling_average"] = sum(float(by_date[d]["actual"] or 0) for d in window) / len(window)
     visible_dates = history_dates + sorted(selected_future)
     series = [
         {"date": d, **by_date[d]}
@@ -103,7 +110,32 @@ def dashboard_data(
     ]
     selected_forecasts = [row for row in forecasts if row.date in selected_future]
     insights = _make_insights(selected_forecasts, horizon_days)
-    business = metrics_blob.get("business_insights", {})
+    fresh_run = bool(run.source_name and run.source_name.startswith("Fresh prediction"))
+    outlook = metrics_blob.get("family_outlook", [])
+    volatility = metrics_blob.get("volatile_series", [])
+    business = dict(metrics_blob.get("business_insights", {}))
+    if fresh_run:
+        outlook = _family_outlook(actuals, forecasts, latest_actual_date) if run.horizon_days >= 30 else []
+        volatility = _recent_volatility(actuals)
+        if selected_forecasts:
+            by_peak_date: dict[date, float] = defaultdict(float)
+            for row in selected_forecasts:
+                by_peak_date[row.date] += row.forecast
+            peak_day = max(by_peak_date, key=by_peak_date.get)
+            business["expected_peak_day"] = peak_day.isoformat()
+            business["expected_peak_units"] = by_peak_date[peak_day]
+        if outlook:
+            ordered = sorted(outlook, key=lambda item: item["change_pct"])
+            business["top_decline_families"] = [
+                {"family": item["family"], "change_pct": item["change_pct"]} for item in ordered[:3]
+            ]
+            business["top_growth_families"] = [
+                {"family": item["family"], "change_pct": item["change_pct"]} for item in ordered[-3:][::-1]
+            ]
+            business["lowest_forecast_families"] = sorted(
+                [{"family": item["family"], "next30_forecast": item["next30_forecast"]} for item in outlook],
+                key=lambda item: item["next30_forecast"],
+            )[:3]
     if store_nbr is None and family is None and business:
         peak_day = business.get("expected_peak_day")
         peak_units = business.get("expected_peak_units")
@@ -121,7 +153,6 @@ def dashboard_data(
             insights.append({"kind": "caution", "title": f"{item['family']} outlook",
                 "detail": "Forecast change versus the previous 30 days.",
                 "value": f"{float(item['change_pct']):.1f}%"})
-    outlook = metrics_blob.get("family_outlook", [])
     if store_nbr is not None or family is not None:
         outlook = []
     return {
@@ -139,6 +170,7 @@ def dashboard_data(
         "model_comparison": model_comparison,
         "rankings": _family_rankings(selected_forecasts, outlook),
         "family_outlook": outlook,
+        "volatility": volatility,
         "figures": metrics_blob.get("figure_files", []),
         "business_insights": business,
         "run_metadata": metrics_blob.get("run_metadata", {}),
@@ -228,6 +260,43 @@ def _family_rankings(rows: list[ForecastPoint], outlook: list[dict] | None = Non
     ]
 
 
+def _family_outlook(actuals: list[DailyActual], forecasts: list[ForecastPoint], origin: date) -> list[dict]:
+    actual_totals: dict[str, float] = defaultdict(float)
+    future_totals: dict[str, float] = defaultdict(float)
+    start = origin - timedelta(days=29)
+    end = origin + timedelta(days=30)
+    for row in actuals:
+        if start <= row.date <= origin:
+            actual_totals[row.family] += row.sales
+    for row in forecasts:
+        if origin < row.date <= end:
+            future_totals[row.family] += row.forecast
+    outlook = []
+    for family, actual in actual_totals.items():
+        predicted = future_totals.get(family, 0.0)
+        change = (predicted / actual - 1) * 100 if actual > 0 else None
+        if change is not None:
+            outlook.append({"family": family, "last30_actual": actual,
+                            "next30_forecast": predicted, "change_pct": change})
+    return sorted(outlook, key=lambda item: item["change_pct"], reverse=True)
+
+
+def _recent_volatility(actuals: list[DailyActual]) -> list[dict]:
+    by_series: dict[tuple[int, str], list[float]] = defaultdict(list)
+    for row in actuals:
+        by_series[(row.store_nbr, row.family)].append(row.sales)
+    results = []
+    for (store, family), values in by_series.items():
+        mean = sum(values) / len(values)
+        if mean <= 1.0:
+            continue
+        variance = sum((value - mean) ** 2 for value in values) / len(values)
+        std = sqrt(variance)
+        results.append({"store_nbr": store, "family": family, "mean90": mean,
+                        "std90": std, "cv90": std / mean})
+    return sorted(results, key=lambda item: item["cv90"], reverse=True)[:25]
+
+
 def _empty_dashboard(run, horizon_days, store_nbr, family, entities):
     return {
         "mode": run.mode, "model_name": run.model_name, "run_id": run.id,
@@ -236,6 +305,7 @@ def _empty_dashboard(run, horizon_days, store_nbr, family, entities):
         "summary": {"actual_total": 0, "average_daily_actual": 0, "forecast_total": 0, "growth_pct": None, "history_days": 0},
         "series": [], "metrics": [], "insights": [],
         "model_comparison": [], "rankings": [], "family_outlook": [], "figures": [],
+        "volatility": [],
         "business_insights": {}, "run_metadata": {}, "cleaning_log": {},
         "entities": entities,
     }

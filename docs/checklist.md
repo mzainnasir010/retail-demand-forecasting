@@ -4,43 +4,43 @@ Mark an item complete only when the repository or demo contains evidence.
 
 ## A. Foundation and data
 
-- [ ] State a realistic business scenario and connect industry → problem → dataset → approach → forecast → decision.
-- [ ] Select a publicly available, legally usable dataset and confirm terms/license before use or redistribution.
-- [ ] Document source, license/terms, retrieval date, row/feature count, time span, granularity, target/units and limitations.
-- [ ] Provide a data dictionary for every field used.
-- [ ] Inspect dimensions, types, missing values, exact duplicates and repeated date/entity keys.
-- [ ] Inspect product/store counts, date range, granularity, calendar gaps and per-series history length.
-- [ ] Summarize target distribution, zeros, statistics, invalid values and unusual spikes.
-- [ ] Document deliberate handling of missing values, duplicates, invalid values, outliers and aggregation.
-- [ ] Distinguish missing observations from genuine zero demand; do not silently remove legitimate spikes.
+- [x] State a realistic business scenario and connect industry → problem → dataset → approach → forecast → decision.
+- [x] Select the Kaggle competition dataset and record its source terms; do not redistribute raw data or imply a standalone open license.
+- [x] Document source, rules reference, retrieval date, row/feature count, time span, granularity, target/units and limitations.
+- [x] Provide a data dictionary for source fields, generated model features and exported outputs.
+- [x] Inspect dimensions, types, missing values, exact duplicates and repeated date/entity keys.
+- [x] Inspect product/store counts, date range, granularity, calendar gaps and per-series history length.
+- [x] Summarize target distribution, zeros, statistics, invalid values and unusual spikes; export daily outlier flags.
+- [x] Document deliberate handling of missing values, duplicates, invalid values, outliers and aggregation.
+- [x] Distinguish calendar closures/missing cells from observed zero demand; do not silently remove legitimate spikes.
 
 ## B. Analysis and time series
 
-- [ ] Include interpreted time-series line chart and rolling-average overlay.
-- [ ] Analyze trend, level changes and weekday/month/year seasonality as history permits.
-- [ ] Include seasonal/subseries views, demand distribution, outlier/spike analysis and product/store comparisons where supported.
-- [ ] Include product/category/store comparisons and a calendar heatmap where supported.
-- [ ] Add a short interpretation and modeling/business implication to every key chart.
-- [ ] Perform and explain decomposition; justify additive vs multiplicative choice.
-- [ ] Inspect residual structure and document stationarity/differencing when using ARIMA-family models.
+- [x] Include interpreted time-series line chart and rolling-average overlay.
+- [x] Analyze trend and weekday/month seasonality; include date trend context in the dashboard.
+- [x] Include seasonal patterns, demand distribution, outlier flags and product/store comparisons.
+- [x] Include product/category/store comparisons and a calendar heatmap.
+- [x] Add chart titles/units and a short modeling/business interpretation in the notebook.
+- [x] Perform and explain additive weekly decomposition; zero-sales closure dates make multiplicative decomposition unsuitable.
+- [x] Stationarity/differencing checks are not applicable because no ARIMA-family model is used.
 
 ## C. Features and validation
 
-- [ ] Build features on chronologically sorted data and state the hypothesis behind each feature group.
-- [ ] Include appropriate lags (e.g. 1, 7, 14, 28) and shifted rolling mean/std (e.g. 7, 14, 28).
-- [ ] Include calendar features (weekday, day, month, quarter/year, weekend, holiday as available).
-- [ ] Use price, promotion, store or category only when present and known at prediction time.
-- [ ] Verify features do not use current/future target; handle undefined lags explicitly.
-- [ ] Use chronological train/validation/test boundaries; no random split.
-- [ ] Fit preprocessing only on training data and keep test untouched during tuning.
-- [ ] Record exact split boundaries and validation strategy; add walk-forward evaluation if appropriate.
+- [x] Build features on chronologically sorted data and state the rationale for lag, calendar and series-context groups.
+- [x] Include lags 1, 7, 14, 28 and shifted rolling mean/std for 7, 14, 28 days.
+- [x] Include weekday, day, month, quarter/year, weekend, payday and available national-holiday calendar features.
+- [x] Exclude promotions because future promotion values are not known in this forecast contract; include store/family context.
+- [x] Ensure lag/rolling features use only dates before each target; warm-up rows are excluded.
+- [x] Use chronological rolling validation and held-out test windows; no random split.
+- [x] Keep held-out windows outside candidate selection; category codes encode known entities and are not target-fitted transforms.
+- [x] Record each origin, target interval and walk-forward window in run metadata.
 
 ## D. Models and forecast quality
 
 - [x] Establish naive and/or seasonal-naive baseline before advanced models.
 - [x] Compare multiple suitable approaches from at least two model families.
-- [ ] Explain selected models and why major alternatives were omitted.
-- [ ] Record versions, random seeds, hardware, training time, hyperparameters and direct/recursive prediction strategy.
+- [x] Explain the selected LightGBM and the tree/baseline alternatives; document why ARIMA/deep-learning approaches were not selected for this pooled multi-series implementation.
+- [x] Record versions, random seed, detected hardware, fit times, parameters and recursive prediction strategy.
 - [x] Report MAE and RMSE plus MAPE or preferably sMAPE when zero-demand periods exist; explain metric choice.
 - [x] Compare candidates to baseline and select using validation performance; baseline comparison and test metrics are exported.
 - [x] Report final performance once on held-out test data.
@@ -50,40 +50,53 @@ Mark an item complete only when the repository or demo contains evidence.
 
 ## E. Insights and product application
 
-- [ ] Identify growth, decline, seasonal peaks, volatility and low-demand items where supported.
-- [ ] Include inventory/reorder suggestions only if inventory and lead-time inputs exist; state assumptions.
-- [ ] Tie each business recommendation to a chart, metric or forecast.
+- [x] Identify growth, decline, forecast peaks, volatile series and lowest-volume families where supported.
+- [x] Withhold inventory/reorder suggestions because stock and lead-time inputs are absent; state this limitation.
+- [x] Tie business signals to the forecast, evaluation metrics, or observed-series volatility values.
 - [x] Provide dashboard overview with historical/forecast demand and growth/decline indicator.
-- [ ] Provide demand-trends panel with actuals, forecasts and seasonal context.
+- [x] Provide demand-trends panel with actuals, forecasts, uncertainty and a 7-day rolling mean.
 - [x] Provide product selector and ranked product view where supported.
 - [x] Provide model comparison including baseline and MAE/RMSE/sMAPE.
 - [x] Provide business insights panel; inventory risk is explicitly withheld without stock and lead-time inputs.
-- [ ] Use consistent chart colors, readable defaults, labeled dates/units, business-friendly names and graceful loading/caching.
+- [x] Use consistent chart colors, labeled dates/units, responsive layouts, loading/error states and cached model loading.
 - [x] Provide functioning FastAPI routes and SQLite persistence for forecast outputs and run metadata.
 
 ## F. Repository and communication deliverables
 
 - [x] Keep backend code in backend/, React code in frontend/, training material in model_training/, and Markdown project docs in docs/.
 - [x] Include Kaggle training notebook and documented cleaning output; confirm dataset terms remain an owner task.
-- [ ] Include notebooks, reusable source, model/config artifacts as license and repository size permit.
-- [ ] Include professional root README covering overview, business problem, dataset, data dictionary, EDA, time-series analysis, features, models, evaluation, forecast results, dashboard, insights, installation, usage, limitations and future improvements.
+- [x] Include the training notebook and reusable inference source; large generated models remain excluded from Git and are loaded from the artifact folder.
+- [x] Include root README covering project, data, EDA, model features/evaluation, inference flow, setup, usage, limitations and next steps.
 - [x] Include .gitignore for secrets, local DB, raw/proprietary data, notebook secrets and large generated artifacts.
 - [ ] Include screenshots of dashboard and key charts.
 - [ ] Provide LinkedIn demonstration video/post covering dataset, EDA, model choice, evaluation vs baseline, forecast, dashboard, insights and lessons.
 - [ ] Provide repository/dashboard links and required submission/contact details through the official process.
-- [ ] Review code quality, reproducibility, leakage safeguards and all assignment quality standards.
+- [x] Review code structure, notebook feature chronology, model/artifact compatibility checks, bounded CSV validation and documented limitations.
 
 ## G. Kaggle training handoff
 
 - [x] Attach the Store Sales competition dataset and align notebook paths/columns; terms acceptance remains an owner task.
-- [ ] Select GPU and two T4 accelerators in Kaggle when available; confirm detected device count.
-- [x] Run preprocessing, baselines, candidate models, evaluation and future forecast cells successfully (final notebook outputs supplied).
+- [ ] Select GPU and two T4 accelerators in Kaggle when available; run updated automatic dual-GPU workflow and confirm device use.
+- [ ] Run the updated notebook after adding EDA and serving sidecars; the previously supplied run predates these new exports.
 - [x] Review metrics and artifacts; selected model is LightGBM using validation windows and baseline/model comparisons.
-- [ ] Create and download the generated ZIP from Kaggle's clickable output link.
-- [ ] Return selected model and output bundle for API/dashboard integration.
+- [ ] Create and download the updated ZIP from Kaggle's clickable output link.
+- [x] Integrate the previously supplied selected model and output files into the API/dashboard; refresh the bundle for inference sidecars before running fresh predictions.
 
 ## External owner actions
 
-- [ ] Confirm/attach the Kaggle dataset and accept required competition terms.
+- [ ] Confirm that the Kaggle competition terms permit any intended public redistribution of derived artifacts; raw source data is not included.
 - [ ] Click the Kaggle notebook download link to save the ZIP locally.
+- [ ] Run the updated Kaggle notebook and provide its refreshed ZIP/model metadata bundle so the model-serving endpoint becomes ready.
+
+## H. Saved-model prediction flow
+
+- [x] Load LightGBM/XGBoost native model artifacts from a configured local artifact directory.
+- [x] Validate model features, model metadata and complete series mappings before inference.
+- [x] Generate recursive 7/14/30-day forecasts with the training feature order and saved validation interval calibration.
+- [x] Accept optional complete, consecutive daily sales input and optional known future national holiday dates.
+- [x] Persist each prediction as a new SQLite run while retaining the linked history.
+- [x] Expose model readiness, prediction submission and downloadable input-template API routes.
+- [x] Expose a downloadable CSV for the active prediction run's series forecasts and intervals.
+- [x] Add the dashboard prediction form with model status, horizon selection, optional CSV, holiday dates, and result/error states.
+- [ ] Re-run/export the updated notebook sidecars and execute a real prediction from the refreshed model bundle.
 - [ ] Record/publish the LinkedIn video/post and complete official submission/contact details.

@@ -1,57 +1,44 @@
 # Project Progress
 
-This is the handoff log. Update it whenever functionality is implemented so another contributor can resume without repeating completed work.
+This is the implementation handoff log. Update it after each feature so another contributor can resume without repeating completed work.
 
 ## Current status
 
-- **Stage:** Final Kaggle notebook outputs integrated into FastAPI/SQLite and React dashboard; mock-data mode removed.
+- **Stage:** Saved model inference, CSV input, forecast persistence and dashboard controls are implemented in code. The trained artifact bundle currently in `model_training/outputs/` predates the required inference sidecars.
 - **Last updated:** 2026-11-10
-- **Next action:** Launch both local servers and review the dashboard. Refresh output data by running the importer from backend when a new Kaggle run is available.
+- **Next action:** Run the updated notebook in Kaggle, download its new ZIP, import it, install backend requirements, then generate and review a fresh prediction in the dashboard.
 
 ## Completed
 
-- [x] Inspected the 20-page assignment brief and mapped requirements into 11 AI/development modules.
-- [x] Selected React + Vite, FastAPI, and SQLite as the initial stack.
-- [x] Created the detailed implementation plan in docs/project.md.
-- [x] Created the requirement ground-truth checklist in docs/checklist.md.
-- [x] Created a Kaggle-compatible notebook, then revised it after reviewing the first run to forecast each store-family series, include promotion/holiday context, and use rolling 16-day evaluation.
-- [x] Created backend/, frontend/, and model_training/ project folders.
-- [x] Checked notebook JSON structure and parsed all Python code cells successfully.
-- [x] Set three rolling windows for validation and two final windows for held-out testing; report baseline and model scores on every window.
-- [x] Added store-level and product-family-level fold metrics, plus a final 16-day forecast bundle output.
-- [x] Rechecked notebook JSON and parsed all Python code cells after the revision.
-- [x] Implemented the FastAPI/SQLite backend with health, entity, dashboard and latest-run endpoints.
-- [x] Added generated sample history and forecasts so the app can run before model files arrive.
-- [x] Added a Kaggle output-bundle importer and updated the notebook to export one year of history for dashboard use.
-- [x] Added backend/frontend setup and model-bundle import instructions to the root README.
-- [x] Built the React + Vite dashboard with overview, forecast chart, store/family filters, model comparison and demand insight views.
-- [x] Connected the dashboard to the FastAPI service and added loading, API error and sample-data states.
-- [x] Added responsive layouts and local API proxy configuration.
-- [x] Replaced the earlier notebook with the user's final `model_training/demand-forecasting-notebook.ipynb`.
-- [x] Imported the final 30-day forecast and rolling-window actuals output formats, along with metrics, family outlook, cleaning metadata, business insights, and figure paths.
-- [x] Connected the API to `model_training/outputs`, enabled first-start import, served exported figures, and removed mock-data seeding and UI messaging.
-- [x] Added 7/14/30-day dashboard horizon controls, final-run metrics, family outlook and evaluation figures.
-- [x] Imported the local output folder and confirmed the dashboard response validates with trained model metrics, 120 chart points, 33 family outlook rows and all four exported figures.
-- [x] Confirmed backend modules compile and the React production build succeeds.
+- [x] Mapped the assignment brief into 11 AI/data and development modules and wrote the implementation plan/checklist.
+- [x] Selected React + Vite + TypeScript, FastAPI, SQLAlchemy and SQLite.
+- [x] Added the Kaggle training notebook with daily series preparation, lag/rolling/calendar features, naive/seasonal-naive baselines, LightGBM/XGBoost candidates, rolling-origin validation and held-out tests.
+- [x] Added an EDA section for trend and rolling mean, weekday/month patterns, distribution, calendar heatmap, store/family comparisons, outlier flags, and additive weekly decomposition; it writes an EDA summary and report figures.
+- [x] Set the notebook to enable concurrent XGBoost jobs automatically when Kaggle detects two GPUs; LightGBM remains CPU by default because Kaggle's stock LightGBM build may not support GPU.
+- [x] Added model-serving sidecars to notebook export: ordered `series_metadata.csv` and `inference_metadata.json` with features, holiday dates and calibration quantiles.
+- [x] Added FastAPI model readiness, downloadable next-day input template, multipart fresh-prediction endpoint for 7/14/30-day horizons, holiday-date input and active-run forecast CSV download.
+- [x] Implemented LightGBM and XGBoost artifact loading, CPU inference, matching recursive feature engineering, optional complete CSV updates, interval construction and validation errors.
+- [x] Persisted predictions as new SQLite forecast runs while keeping incremental observed sales linked to the original history run.
+- [x] Added the dashboard prediction workflow, artifact readiness state, input template and output download links, CSV upload, holiday dates, progress/success/error messages, rolling 7-day history line, family outlook, volatility, and low-volume families.
+- [x] Updated the requirement checklist and added a model-serving implementation addendum to the plan.
+- [x] Rewrote the README as an independent project document with dataset provenance, evaluation, setup, fresh-inference flow and limits.
+- [x] Removed project-specific organization references from application code and docs; renamed the source brief to `assignment-brief.pdf`.
 
-## Not started
+## Pending external/runtime actions
 
-- [ ] Dataset attached, source terms verified, and data profile recorded.
-- [ ] EDA, cleaning decisions, decomposition and data dictionary completed on the actual dataset.
-- [x] Model training completed and selected model/artifacts reviewed (final LightGBM notebook outputs supplied by user).
-- [x] FastAPI backend and SQLite persistence implemented.
-- [x] React dashboard implemented and connected to backend.
-- [x] Updated README for final output layout and local startup/import workflow.
-- [ ] Screenshots, demo and submission details completed.
+- [ ] Execute the updated notebook in Kaggle. The existing output folder lacks `series_metadata.csv` and `inference_metadata.json`, so fresh inference currently reports not ready until the bundle is refreshed.
+- [ ] On Kaggle, select two T4 GPUs (when available) and confirm the updated automatic parallel mode detects and uses both for XGBoost windows.
+- [ ] Download and import the refreshed bundle; generated outputs and the model binary remain Git-ignored due to their size.
+- [ ] Install the new LightGBM/XGBoost backend requirements, then check `/api/model/status` and generate a prediction from the dashboard.
+- [ ] Capture dashboard/report screenshots and complete any public demo or formal submission materials required by the assignment.
+- [ ] Confirm the competition terms for intended sharing. The source data is not redistributed.
 
-## Handoff notes
+## Handoff details
 
-- The attached assignment PDF is the requirements source in the project root.
-- Notebook expects the Store Sales competition files under /kaggle/input/competitions/store-sales-time-series-forecasting, including train.csv, test.csv, holidays_events.csv and stores.csv when present.
-- The revised notebook predicts each store × family series, uses known promotions in backtests and test.csv for future promotion inputs, and compares three validation windows plus two held-out test windows. Check package availability, memory use, promotion coverage and all fold outputs in Kaggle; only notebook structure and Python syntax have been checked locally.
-- Kaggle notebook code can create a ZIP in /kaggle/working and display a clickable file link. A browser download requires the user to click that link; a remote notebook cannot silently write files onto the user's local device.
-- The two-T4 setting is not needed for the revised tree-model comparison; LightGBM/XGBoost acceleration depends on the Kaggle package build.
-- Backend commands and route behavior are documented in the root README. Frontend dependencies are locked in frontend/package-lock.json.
-- The live Kaggle outputs are present under `model_training/outputs/`; generated CSVs and model artifacts are git-ignored due to their size. The local app auto-imports them on first launch. A fresh clone needs the output folder supplied separately.
-- The final notebook/output bundle was supplied already run by the user; this implementation session validated/imported those output files and did not repeat GPU training.
-- Do not commit credentials, Kaggle tokens, raw data with unclear terms, or large model binaries.
+- Run backend from `backend/` with `uvicorn app.main:app --reload`; run frontend from `frontend/` with `npm run dev`.
+- Fresh prediction request: `POST /api/predictions` multipart fields `horizon_days` and optional `observations` CSV with `date,store_nbr,family,sales`.
+- Uploaded rows must append consecutive days after saved history and contain exactly one observation for every trained store/family series on each day. The input template endpoint creates the complete next-day series list.
+- Model files are loaded only from the configured artifact directory. ZIP imports copy an allowlist of files and never extract arbitrary paths.
+- The currently supplied held-out results show LightGBM with lower MAE/RMSE than seasonal naive, while seasonal naive has lower sMAPE; this mixed outcome is stated in the README.
+- The dataset ends at 2017-08-15. A forecast without an appended CSV uses that historical endpoint; it is a new inference run, not a live-data feed.
+- Inventory levels and supplier lead times are unavailable, so the dashboard does not make stockout/reorder claims.

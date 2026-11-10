@@ -15,6 +15,7 @@ class ForecastRun(Base):
     model_name: Mapped[str] = mapped_column(String(120), default="LightGBM")
     horizon_days: Mapped[int] = mapped_column(Integer, default=30)
     source_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    history_run_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     metrics: Mapped[dict] = mapped_column(JSON, default=dict)
 
     actuals: Mapped[list["DailyActual"]] = relationship(

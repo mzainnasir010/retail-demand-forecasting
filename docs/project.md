@@ -2,7 +2,7 @@
 
 ## Project goal
 
-Build a reproducible retail demand forecasting system that turns historical demand into a validated 7–30 day forecast, explains its uncertainty and errors, and presents evidence-backed decisions through a dashboard. Preserve chronological order and prevent future information from leaking into training or evaluation.
+Build a reproducible retail demand forecasting system that turns historical demand into a validated 7–30 day forecast, loads the saved model for fresh API inference, explains uncertainty and errors, and presents evidence-backed decisions through a dashboard. Preserve chronological order and prevent future information from leaking into training or evaluation.
 
 ## Total modules: 11
 
@@ -18,7 +18,7 @@ Build a reproducible retail demand forecasting system that turns historical dema
 | 6 | Baselines and model training | AI / Data | Seasonal-naive baseline and multiple suitable approaches trained reproducibly |
 | 7 | Evaluation and error analysis | AI / Data | Chronological comparison with multiple metrics, residual analysis and failure cases |
 | 8 | Future forecasts and business recommendations | AI / Data | Horizon forecasts, uncertainty, demand risks and traceable actions |
-| 9 | Forecast API and persistence | Development | FastAPI endpoints backed by SQLite for forecast and metadata access |
+| 9 | Model serving, forecast API and persistence | Development | Load the trained artifact for fresh predictions; persist forecast runs and metadata in SQLite |
 | 10 | Interactive forecasting dashboard | Development | React + Vite views and filters for trends, forecasts, models and insights |
 | 11 | Packaging, documentation and handoff | Development | Reproducible repository, README, screenshots/demo materials and submission readiness |
 
@@ -107,4 +107,36 @@ If the project owner provides another dataset, update the column mapping and bus
 
 ## Definition of done
 
-The final product satisfies every applicable item in docs/checklist.md; it includes reproducible data/model steps, honest chronological evaluation against a baseline, a usable dashboard/API, documented limitations and evidence-backed recommendations. External submission items (publishing the LinkedIn video, supplying personal contact details, and submitting repository links) remain user actions.
+
+## Implementation addendum — saved model and fresh prediction flow
+
+The model-serving flow is a core application capability. Forecast CSV imports remain useful for reproducible reports and historical comparisons, while `POST /api/predictions` performs actual inference with the selected saved model.
+
+### Notebook serving contract
+
+The completed training notebook must export the following alongside the existing evaluation bundle:
+
+- `selected_lightgbm.txt` or `selected_xgboost.json`: the selected trained model in the library's native format.
+- `series_metadata.csv`: one row per modeled store/family series, with the exact training order and the categorical/static feature codes (`store_nbr`, `family`, `family_code`, `cluster`, `store_type_code`, `series_index`).
+- `inference_metadata.json`: ordered feature names/calendar fields, log-target setting, known national holiday dates, required history length, and per-horizon residual quantiles used for calibrated intervals.
+- EDA summary, daily outlier flags, and EDA figures, in addition to evaluation outputs.
+
+### Runtime request/response flow
+
+1. The output-bundle importer validates forecast columns and model metadata, imports rolling actuals and evaluation results to SQLite, and copies only allowlisted model/sidecar/figure files from a ZIP into the configured artifact folder. It never executes an uploaded model or extracts arbitrary archive paths.
+2. `GET /api/model/status` loads the active artifact and checks that the series mapping and ordered feature count are compatible. Missing or incompatible files produce an actionable unavailable state.
+3. `GET /api/predictions/input-template.csv` creates a complete next-date CSV containing every trained series. The operator fills the observed sales values for all modeled series on each added date.
+4. `POST /api/predictions` accepts `horizon_days` (7, 14, or 30), an optional CSV (`date,store_nbr,family,sales`), and optional comma-separated national holiday dates for dates beyond the exported calendar. When supplied, rows must be finite, nonnegative, unique and consecutive after the saved history end, with full coverage of every trained series on each date. Without a CSV, the endpoint uses saved history as-is.
+5. The service builds the same calendar/static/lag/rolling features as training, recursively feeds each day's model-space predictions into the next day, transforms back from log1p where configured, and applies saved validation residual quantiles for interval bounds.
+6. A new run and its predictions are committed to SQLite; appended observations are associated with the source history. That new run becomes the dashboard default. Any input validation or model compatibility failure returns a clear 4xx response without creating a partial forecast run.
+
+### API and UI requirements
+
+- Keep artifact paths fixed to the configured artifact directory; never accept a filesystem path in a request.
+- Bound CSV uploads to 25 MB and 250,000 rows; reject unknown series and incomplete appended dates.
+- Show readiness, model name, series/feature counts, forecast horizon, input origin and run identifier in the UI/API response.
+- Provide a downloadable CSV for the active run's store/family forecasts and interval bounds.
+- Add a prediction form to the dashboard with a 7/14/30 horizon, optional CSV upload, downloadable template, progress state and actionable error/success messages.
+- Preserve model comparison, saved evaluation figures, seasonality context, family outlook, volatility, and the limitation that stock/lead-time-based inventory advice is unsupported without those inputs.
+
+The original Kaggle export predates `series_metadata.csv` and `inference_metadata.json`. The refreshed notebook must be executed and re-imported before the fresh-inference endpoint can report ready. This is a data/artifact refresh, not a change to the selected model's training/evaluation method.

@@ -3,6 +3,7 @@ import argparse
 from io import BytesIO
 import json
 from pathlib import Path
+import shutil
 import zipfile
 
 import pandas as pd
@@ -10,6 +11,7 @@ from sqlalchemy import insert
 
 from .database import Base, SessionLocal, engine
 from .models import DailyActual, ForecastPoint, ForecastRun
+from .config import TRAINING_OUTPUTS_DIR
 
 
 def read_bundle_file(source: Path, *names: str):
@@ -25,8 +27,8 @@ def read_bundle_file(source: Path, *names: str):
                 members = [m for m in archive.namelist() if Path(m).name == name]
                 if members:
                     info = archive.getinfo(members[0])
-                    if info.file_size > 1_000_000_000:
-                        raise ValueError(f"{name} is unexpectedly large.")
+                    if info.file_size > 250_000_000:
+                        raise ValueError(f"{name} exceeds the 250 MB import limit.")
                     return BytesIO(archive.read(members[0]))
         return None
     raise ValueError("Provide an output folder or ZIP bundle.")
@@ -63,6 +65,8 @@ def import_bundle(source: Path) -> int:
         raise ValueError(f"Forecast CSV is missing columns: {sorted(required - set(forecast.columns))}")
 
     metadata = read_json(source, "run_metadata.json")
+    inference_metadata = read_json(source, "inference_metadata.json")
+    _persist_serving_artifacts(source)
     window_file = read_bundle_file(source, "window_predictions.csv")
     if window_file is not None:
         history = pd.read_csv(
@@ -104,6 +108,13 @@ def import_bundle(source: Path) -> int:
         return normalized
 
     rolling = normalize_metrics(validation_rows, "validation") + normalize_metrics(test_rows, "test")
+    figure_candidates = [
+        "figures/eda_demand_trend.png", "figures/eda_calendar_patterns.png", "figures/eda_yearly_demand.png",
+        "figures/eda_store_family_comparison.png", "figures/eda_distribution_calendar_heatmap.png",
+        "figures/eda_weekly_decomposition.png", "figures/validation_mae_by_model.png",
+        "figures/test_actual_vs_forecast.png", "figures/residuals_over_time.png",
+        "figures/residual_distribution.png",
+    ]
     metrics: dict = {
         "rolling": rolling,
         "validation_by_window": read_records(source, "validation_metrics_by_window.csv"),
@@ -116,13 +127,13 @@ def import_bundle(source: Path) -> int:
         "cleaning_log": read_json(source, "cleaning_log.json"),
         "data_dictionary": read_json(source, "data_dictionary.json"),
         "run_metadata": metadata,
-        "figure_files": [
-            "figures/validation_mae_by_model.png",
-            "figures/test_actual_vs_forecast.png",
-            "figures/residuals_over_time.png",
-            "figures/residual_distribution.png",
-        ],
-        "model_artifact": "selected_lightgbm.txt" if read_bundle_file(source, "selected_lightgbm.txt") else None,
+        "figure_files": [name for name in figure_candidates if read_bundle_file(source, Path(name).name) is not None],
+        "model_artifact": (
+            "selected_lightgbm.txt" if read_bundle_file(source, "selected_lightgbm.txt") else
+            "selected_xgboost.json" if read_bundle_file(source, "selected_xgboost.json") else None
+        ),
+        "inference_metadata": inference_metadata,
+        "eda_summary": read_json(source, "eda_summary.json"),
     }
     selected_test = next((r for r in rolling if r["split"] == "test" and r["model"] == selected), {})
     seasonal_test = next((r for r in rolling if r["split"] == "test" and r["model"] == "seasonal_naive"), {})
@@ -176,6 +187,31 @@ def import_bundle(source: Path) -> int:
             ])
         db.commit()
         return run.id
+
+
+def _persist_serving_artifacts(source: Path) -> None:
+    """Copy only known inference files from a folder/ZIP, never arbitrary archive paths."""
+    allowed = (
+        "selected_lightgbm.txt", "selected_xgboost.json",
+        "series_metadata.csv", "inference_metadata.json",
+        "eda_demand_trend.png", "eda_calendar_patterns.png", "eda_yearly_demand.png", "eda_store_family_comparison.png",
+        "eda_distribution_calendar_heatmap.png", "eda_weekly_decomposition.png",
+        "validation_mae_by_model.png", "test_actual_vs_forecast.png",
+        "residuals_over_time.png", "residual_distribution.png",
+    )
+    TRAINING_OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    for name in allowed:
+        item = read_bundle_file(source, name)
+        if item is None:
+            continue
+        target_dir = TRAINING_OUTPUTS_DIR / "figures" if name.endswith(".png") else TRAINING_OUTPUTS_DIR
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / name
+        if isinstance(item, BytesIO):
+            target.write_bytes(item.getvalue())
+        else:
+            if item.resolve() != target.resolve():
+                shutil.copy2(item, target)
 
 
 def main():

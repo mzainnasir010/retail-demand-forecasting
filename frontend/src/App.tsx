@@ -8,7 +8,8 @@ import {
   DownloadSimple, Gauge, House, Lightbulb, MagnifyingGlass, Package,
   Storefront, WarningCircle,
 } from "@phosphor-icons/react";
-import { fetchDashboard, fetchHealth } from "./api";
+import { createPrediction, fetchDashboard, fetchHealth, fetchModelStatus } from "./api";
+import type { ModelStatus } from "./api";
 import type { DashboardData } from "./types";
 
 type Section = "overview" | "performance" | "insights";
@@ -88,8 +89,8 @@ function App() {
             <div><strong>Planning horizon</strong><p>Prepare inventory and teams with a clear view of demand.</p></div>
           </div>
           <div className="profile">
-            <div className="avatar">S</div>
-            <div><strong>SEKER AI project</strong><span>Local workspace</span></div>
+            <div className="avatar">R</div>
+            <div><strong>Demand forecast workspace</strong><span>Local workspace</span></div>
             <CaretDown size={15} />
           </div>
         </div>
@@ -101,7 +102,7 @@ function App() {
           <div className="topbar-right">
             <span className={"connection " + apiState}><span />{apiState === "ready" ? "API connected" : apiState === "error" ? "API unavailable" : "Connecting"}</span>
             <button className="icon-button" aria-label="Search" title="Search"><MagnifyingGlass size={18} /></button>
-            <div className="top-avatar">S</div>
+            <div className="top-avatar">R</div>
           </div>
         </header>
 
@@ -114,7 +115,7 @@ function App() {
             </div>
             <div className="heading-actions">
               <button className="date-button" onClick={() => setRefresh((value) => value + 1)}><span className="live-dot" />Latest run<CaretDown size={15} /></button>
-              <button className="primary-button" onClick={() => setRefresh((value) => value + 1)}><DownloadSimple size={17} />Refresh data</button>
+              <button className="primary-button" onClick={() => setSection("performance")}><ChartLineUp size={17} />New prediction</button>
             </div>
           </div>
 
@@ -148,7 +149,7 @@ function App() {
                 ))}
               </div>
               {section === "overview" && <Overview data={data} chartData={chartData} origin={origin} />}
-              {section === "performance" && <Performance data={data} />}
+              {section === "performance" && <Performance data={data} onPrediction={() => { setStore(null); setFamily(null); setRefresh((value) => value + 1); }} />}
               {section === "insights" && <Insights data={data} />}
               <footer className="page-footer">
                 <span>Forecast output · Run {data.run_id} · {data.model_name}</span>
@@ -184,7 +185,7 @@ function Overview({ data, chartData, origin }: { data: DashboardData; chartData:
       <div className="content-grid">
         <section className="panel trend-panel">
           <div className="panel-heading"><div><h2>Demand over time</h2><p>Actual sales and projected demand</p></div><span className="chart-period">Recent history · {data.horizon_days}-day outlook</span></div>
-          <div className="chart-legend"><span><i className="legend-dot actual" />Actual</span><span><i className="legend-line forecast" />Forecast</span><span><i className="legend-band" />Uncertainty range</span></div>
+          <div className="chart-legend"><span><i className="legend-dot actual" />Actual</span><span><i className="legend-line forecast" />Forecast</span><span><i className="legend-line rolling" />7-day mean</span><span><i className="legend-band" />Uncertainty range</span></div>
           <div className="chart-wrap">
             {chartData.length ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -196,6 +197,7 @@ function Overview({ data, chartData, origin }: { data: DashboardData; chartData:
                   {origin && <ReferenceLine x={origin} stroke="#a8aca6" strokeDasharray="4 4" label={{ value: "Today", position: "insideTopRight", fill: "#858b83", fontSize: 11 }} />}
                   <Area dataKey="band" type="monotone" fill="#dcece2" stroke="none" connectNulls={false} />
                   <Area dataKey="actual" type="monotone" fill="#e3efe8" fillOpacity={0.5} stroke="#4f8068" strokeWidth={2} connectNulls />
+                  <Line dataKey="rolling_average" type="monotone" stroke="#78899b" strokeWidth={1.6} strokeDasharray="3 3" dot={false} connectNulls />
                   <Line dataKey="forecast" type="monotone" stroke="#c18b3f" strokeWidth={2.4} strokeDasharray="6 4" dot={false} connectNulls />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -226,8 +228,8 @@ function Overview({ data, chartData, origin }: { data: DashboardData; chartData:
 
 function ForecastTooltip({ active, payload, label }: { active?: boolean; payload?: { dataKey: string; value: number }[]; label?: string }) {
   if (!active || !payload?.length) return null;
-  const rows = payload.filter((entry) => ["actual", "forecast"].includes(entry.dataKey) && entry.value !== undefined);
-  return <div className="chart-tooltip"><strong>{label ? formatDate(label) : ""}</strong>{rows.map((row) => <div key={row.dataKey}><span>{row.dataKey === "actual" ? "Actual" : "Forecast"}</span><b>{number.format(row.value)}</b></div>)}</div>;
+  const rows = payload.filter((entry) => ["actual", "forecast", "rolling_average"].includes(entry.dataKey) && entry.value !== undefined);
+  return <div className="chart-tooltip"><strong>{label ? formatDate(label) : ""}</strong>{rows.map((row) => <div key={row.dataKey}><span>{row.dataKey === "actual" ? "Actual" : row.dataKey === "rolling_average" ? "7-day mean" : "Forecast"}</span><b>{number.format(row.value)}</b></div>)}</div>;
 }
 
 function RankingList({ data }: { data: DashboardData }) {
@@ -241,10 +243,11 @@ function RankingList({ data }: { data: DashboardData }) {
   );
 }
 
-function Performance({ data }: { data: DashboardData }) {
+function Performance({ data, onPrediction }: { data: DashboardData; onPrediction: () => void }) {
   const comparison = data.model_comparison;
   return (
     <div className="section-stack">
+      <PredictionPanel modelName={data.model_name} onComplete={onPrediction} />
       <section className="panel performance-panel">
         <div className="panel-heading"><div><h2>Held-out model comparison</h2><p>Mean scores across final rolling forecast windows</p></div><span className="test-badge">TEST WINDOWS</span></div>
         {comparison.length ? (
@@ -267,6 +270,51 @@ function Performance({ data }: { data: DashboardData }) {
   );
 }
 
+function PredictionPanel({ modelName, onComplete }: { modelName: string; onComplete: () => void }) {
+  const [status, setStatus] = useState<ModelStatus | null>(null);
+  const [statusError, setStatusError] = useState("");
+  const [horizon, setHorizon] = useState(30);
+  const [file, setFile] = useState<File | undefined>();
+  const [holidayDates, setHolidayDates] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    fetchModelStatus().then((result) => { if (active) setStatus(result); })
+      .catch((reason: unknown) => { if (active) setStatusError(reason instanceof Error ? reason.message : "Could not inspect the saved model."); });
+    return () => { active = false; };
+  }, []);
+
+  async function generate() {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const result = await createPrediction(horizon, file, holidayDates);
+      setMessage(`Run ${result.run_id} created from ${formatDate(result.origin)}. ${number.format(result.forecast_rows)} forecasts are ready.`);
+      onComplete();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Prediction could not be generated.");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <section className="panel prediction-panel">
+      <div className="panel-heading"><div><h2>Generate a fresh forecast</h2><p>Load the saved model and run recursive predictions for all trained store and family series.</p></div><span className={status?.ready ? "model-badge ready" : "model-badge"}>{status?.ready ? "MODEL READY" : "MODEL SETUP REQUIRED"}</span></div>
+      <div className="prediction-form">
+        <div className="prediction-model"><span>Saved model</span><strong>{status?.model_name || modelName}</strong><small>{status?.ready ? `${status.series_count.toLocaleString()} store/family series · ${status.feature_count} trained features` : statusError || status?.reason || "Checking model files…"}</small></div>
+        <label className="prediction-field"><span>Horizon</span><select value={horizon} onChange={(event) => setHorizon(Number(event.target.value))}><option value={7}>7 days</option><option value={14}>14 days</option><option value={30}>30 days</option></select></label>
+        <label className="prediction-field input-file-field"><span>New observed sales CSV <small>(optional)</small></span><input type="file" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0])} /></label>
+        <label className="prediction-field holiday-field"><span>Known national holidays <small>(optional dates)</small></span><input type="text" value={holidayDates} placeholder="YYYY-MM-DD, YYYY-MM-DD" onChange={(event) => setHolidayDates(event.target.value)} /></label>
+        {status?.ready && <a className="text-button template-link" href="/api/predictions/input-template.csv"><DownloadSimple size={15} />Download input template</a>}
+        <button className="primary-button prediction-submit" disabled={!status?.ready || busy} onClick={generate}>{busy ? <CircleNotch className="spin" size={17} /> : <ChartLineUp size={17} />}{busy ? "Generating…" : "Generate forecast"}</button>
+      </div>
+      <p className="prediction-help">Without a file, the model uses the latest sales history already saved in this workspace. To use new data, fill the downloaded CSV: date, store_nbr, family, sales. Each appended date must include every trained series and continue directly after saved history. Add known future national holiday dates in YYYY-MM-DD format, separated by commas.</p>
+      {message && <p className="prediction-message success">{message} <a href="/api/runs/latest/forecast.csv">Download forecast CSV</a></p>}{(error || statusError || (status && !status.ready && status.reason)) && <p className="prediction-message error">{error || statusError || status?.reason}</p>}
+    </section>
+  );
+}
+
 function Insights({ data }: { data: DashboardData }) {
   return (
     <div className="insights-layout">
@@ -280,6 +328,8 @@ function Insights({ data }: { data: DashboardData }) {
       </section>
       <section className="panel ranking-panel insight-ranking"><div className="panel-heading"><div><h2>Expected demand by family</h2><p>Selected horizon · forecast units</p></div></div><RankingList data={data} /></section>
       {data.family_outlook.length > 0 && <section className="panel performance-panel"><div className="panel-heading"><div><h2>30-day family outlook</h2><p>Forecast volume compared with the previous 30 days</p></div></div><div className="table-scroll"><table className="data-table"><thead><tr><th>Family</th><th>Previous 30 days</th><th>Next 30 days</th><th>Change</th></tr></thead><tbody>{data.family_outlook.map((row) => <tr key={row.family}><td>{row.family}</td><td>{number.format(row.last30_actual)}</td><td>{number.format(row.next30_forecast)}</td><td>{row.change_pct > 0 ? "+" : ""}{row.change_pct.toFixed(1)}%</td></tr>)}</tbody></table></div></section>}
+      {data.volatility.length > 0 && <section className="panel performance-panel"><div className="panel-heading"><div><h2>Volatile store and family series</h2><p>Highest coefficient of variation over recent observed demand</p></div></div><div className="table-scroll"><table className="data-table"><thead><tr><th>Store</th><th>Family</th><th>90-day mean</th><th>Coefficient of variation</th></tr></thead><tbody>{data.volatility.slice(0, 12).map((row) => <tr key={`${row.store_nbr}-${row.family}`}><td>{row.store_nbr}</td><td>{row.family}</td><td>{number.format(row.mean90)}</td><td>{row.cv90.toFixed(2)}</td></tr>)}</tbody></table></div></section>}
+      {(data.business_insights.lowest_forecast_families?.length ?? 0) > 0 && <section className="panel ranking-panel insight-ranking"><div className="panel-heading"><div><h2>Lowest forecast family volumes</h2><p>Low expected volume over the next 30 days; not a stockout signal</p></div></div><div className="ranking-list">{data.business_insights.lowest_forecast_families?.map((row) => <div className="ranking-row" key={row.family}><span className="rank-name">{row.family}</span><span /><span /><strong>{compact.format(row.next30_forecast)}</strong><small>units</small></div>)}</div></section>}
       <aside className="method-note"><WarningCircle size={18} /><p>Inventory risk and reorder quantities need on-hand stock and supplier lead-time data. This dashboard does not infer those values.</p></aside>
     </div>
   );
