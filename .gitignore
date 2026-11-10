@@ -11,6 +11,12 @@ data/processed/
 models/
 outputs/
 demand_forecast_output/
+backend/data/
+backend/artifacts/
+*.db
+frontend/node_modules/
+frontend/dist/
+*.tsbuildinfo
 *.pkl
 *.pt
 *.pth

@@ -4,9 +4,9 @@ This is the handoff log. Update it whenever functionality is implemented so anot
 
 ## Current status
 
-- **Stage:** Revised Kaggle training workflow prepared; application implementation has not started.
+- **Stage:** FastAPI/SQLite backend implemented; React dashboard is being completed. App will start in sample-data mode until the Kaggle run is imported.
 - **Last updated:** 2026-11-10
-- **Next action:** Replace the previous Kaggle notebook with the revised model_training/demand_forecasting_kaggle.ipynb (or paste its updated cells), rerun from the top, and share rolling-window validation/test scores plus the new output bundle.
+- **Next action:** Finish and commit the dashboard. Then run the API and dashboard locally in sample-data mode; when the Kaggle bundle is ready, import it to make that trained run active.
 
 ## Completed
 
@@ -20,13 +20,17 @@ This is the handoff log. Update it whenever functionality is implemented so anot
 - [x] Set three rolling windows for validation and two final windows for held-out testing; report baseline and model scores on every window.
 - [x] Added store-level and product-family-level fold metrics, plus a final 16-day forecast bundle output.
 - [x] Rechecked notebook JSON and parsed all Python code cells after the revision.
+- [x] Implemented the FastAPI/SQLite backend with health, entity, dashboard and latest-run endpoints.
+- [x] Added generated sample history and forecasts so the app can run before model files arrive.
+- [x] Added a Kaggle output-bundle importer and updated the notebook to export one year of history for dashboard use.
+- [x] Added backend/frontend setup and model-bundle import instructions to the root README.
 
 ## Not started
 
 - [ ] Dataset attached, source terms verified, and data profile recorded.
 - [ ] EDA, cleaning decisions, decomposition and data dictionary completed on the actual dataset.
 - [ ] Model training completed and selected model/artifacts reviewed.
-- [ ] FastAPI backend and SQLite persistence implemented.
+- [x] FastAPI backend and SQLite persistence implemented.
 - [ ] React dashboard implemented and connected to backend.
 - [ ] Final README, screenshots, demo and submission details completed.
 
@@ -37,4 +41,5 @@ This is the handoff log. Update it whenever functionality is implemented so anot
 - The revised notebook predicts each store × family series, uses known promotions in backtests and test.csv for future promotion inputs, and compares three validation windows plus two held-out test windows. Check package availability, memory use, promotion coverage and all fold outputs in Kaggle; only notebook structure and Python syntax have been checked locally.
 - Kaggle notebook code can create a ZIP in /kaggle/working and display a clickable file link. A browser download requires the user to click that link; a remote notebook cannot silently write files onto the user's local device.
 - The two-T4 setting is not needed for the revised tree-model comparison; LightGBM/XGBoost acceleration depends on the Kaggle package build.
+- Backend commands and route behavior are documented in the root README. The frontend is currently being built; its completed state will be recorded in a separate commit.
 - Do not commit credentials, Kaggle tokens, raw data with unclear terms, or large model binaries.
