@@ -14,7 +14,7 @@ A complete retail demand forecasting application for forecasting daily sales by 
 
 ## Demo video
 
-![Retail demand forecasting demo](https://github.com/user-attachments/assets/7beef76f-9912-40fa-a090-c00595d3ec0c)
+https://github.com/user-attachments/assets/7beef76f-9912-40fa-a090-c00595d3ec0c
 
 ## Notebook output figures
 
