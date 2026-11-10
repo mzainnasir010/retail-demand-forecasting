@@ -11,9 +11,9 @@ class ForecastRun(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
-    mode: Mapped[str] = mapped_column(String(24), default="demo")
-    model_name: Mapped[str] = mapped_column(String(120), default="Demo seasonal model")
-    horizon_days: Mapped[int] = mapped_column(Integer, default=16)
+    mode: Mapped[str] = mapped_column(String(24), default="trained")
+    model_name: Mapped[str] = mapped_column(String(120), default="LightGBM")
+    horizon_days: Mapped[int] = mapped_column(Integer, default=30)
     source_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     metrics: Mapped[dict] = mapped_column(JSON, default=dict)
 

@@ -25,6 +25,11 @@ export type DashboardData = {
   metrics: { label: string; value: number | null; unit: string; detail: string }[];
   insights: { kind: string; title: string; detail: string; value?: string }[];
   model_comparison: { model: string; MAE: number | null; RMSE: number | null; sMAPE_pct: number | null }[];
-  rankings: { family: string; forecast: number; share_pct: number }[];
+  rankings: { family: string; forecast: number; share_pct: number; change_pct?: number | null }[];
+  family_outlook: { family: string; last30_actual: number; next30_forecast: number; change_pct: number }[];
+  figures: string[];
+  business_insights: { expected_peak_day?: string; expected_peak_units?: number; top_growth_families?: { family: string; change_pct: number }[]; top_decline_families?: { family: string; change_pct: number }[]; unavailable_inputs?: string[]; note?: string };
+  run_metadata: Record<string, unknown>;
+  cleaning_log: Record<string, unknown>;
   entities: { stores: number[]; families: string[] };
 };

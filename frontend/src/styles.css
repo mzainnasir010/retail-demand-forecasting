@@ -59,11 +59,7 @@ button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid
 .icon-button:hover { border-radius: 8px; background: #eff1eb; }
 .top-avatar { width: 27px; height: 27px; font-size: 10px; }
 .page-content { max-width: 1510px; margin: 0 auto; padding: 28px 42px 24px; }
-.demo-banner { display: flex; align-items: center; gap: 9px; padding: 9px 12px; margin-bottom: 24px; border: 1px solid #ead8b8; border-radius: 7px; background: #fbf5e9; color: #796340; font-size: 10px; }
-.demo-banner strong { font-weight: 700; color: #66502c; }
-.demo-dot,.live-dot { display: inline-block; width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: #c08e41; }
-.demo-banner a { margin-left: auto; color: #6b5733; text-decoration: none; font-weight: 700; }
-.demo-banner a:hover { text-decoration: underline; }
+.live-dot { display: inline-block; width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: #c08e41; }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin: 0 0 22px; }
 .eyebrow { color: #8a938b; font-size: 9px; font-weight: 700; letter-spacing: 1.7px; }
 h1,h2,h3,p { margin-top: 0; }
@@ -161,6 +157,10 @@ h1 { margin: 7px 0 4px; color: #24312a; font-family: "Segoe UI", Arial, sans-ser
 .empty-state strong { margin-top: 10px; color: #546158; font-size: 12px; }
 .empty-state p { max-width: 330px; margin: 5px 0 0; color: #899189; font-size: 10px; line-height: 1.5; }
 .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; }
+.report-figures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; padding: 0 22px 22px; }
+.report-figures figure { margin: 0; min-width: 0; border: 1px solid #e8e8e1; border-radius: 10px; overflow: hidden; background: #fff; }
+.report-figures img { display: block; width: 100%; height: auto; }
+.report-figures figcaption { padding: 10px 12px; color: #626960; font-size: 12px; text-transform: capitalize; }
 .metric-card { min-height: 92px; display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 7px; background: white; }
 .metric-card span { color: #838c84; font-size: 9px; }
 .metric-card strong { color: #344238; font-family: "Segoe UI", Arial, sans-serif; font-size: 19px; letter-spacing: -.5px; }
@@ -209,6 +209,7 @@ h1 { margin: 7px 0 4px; color: #24312a; font-family: "Segoe UI", Arial, sans-ser
   .signal-list { grid-template-columns: repeat(2,1fr); column-gap: 14px; }
 }
 @media (max-width: 620px) {
+  .report-figures { grid-template-columns: 1fr; padding: 0 12px 12px; }
   .app-shell { display: block; padding-bottom: 61px; }
   .sidebar { position: fixed; z-index: 20; inset: auto 0 0; width: 100%; min-height: 58px; height: 58px; flex-direction: row; justify-content: center; padding: 5px 10px; border-top: 1px solid rgb(255 255 255 / 12%); }
   .brand,.workspace-label,.sidebar-bottom { display: none; }
@@ -221,8 +222,6 @@ h1 { margin: 7px 0 4px; color: #24312a; font-family: "Segoe UI", Arial, sans-ser
   .connection { font-size: 0; }
   .connection > span { width: 7px; height: 7px; }
   .page-content { padding: 18px 14px 20px; }
-  .demo-banner { align-items: flex-start; font-size: 9px; line-height: 1.5; }
-  .demo-banner a { display: none; }
   .page-heading { align-items: flex-start; flex-direction: column; margin-bottom: 16px; }
   .heading-actions { width: 100%; }
   .date-button,.primary-button { flex: 1; }

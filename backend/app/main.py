@@ -1,10 +1,12 @@
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
-from .config import FRONTEND_ORIGIN
+from .config import FRONTEND_ORIGIN, TRAINING_OUTPUTS_DIR
 from .database import Base, engine, get_db
-from .demo import seed_demo_data
-from .models import ForecastRun
+from .import_bundle import import_bundle
+from .models import DailyActual, ForecastPoint, ForecastRun
 from .schemas import DashboardResponse, EntityOptions, HealthResponse
 from .service import dashboard_data, entity_options, latest_run
 
@@ -22,12 +24,27 @@ app.add_middleware(
 )
 
 
+app.mount(
+    "/api/artifacts",
+    StaticFiles(directory=TRAINING_OUTPUTS_DIR, check_dir=False),
+    name="forecast-artifacts",
+)
+
+
 @app.on_event("startup")
 def initialize_database() -> None:
     Base.metadata.create_all(bind=engine)
     from .database import SessionLocal
     with SessionLocal() as db:
-        seed_demo_data(db)
+        demo_ids = db.scalars(select(ForecastRun.id).where(ForecastRun.mode == "demo")).all()
+        if demo_ids:
+            db.execute(delete(DailyActual).where(DailyActual.run_id.in_(demo_ids)))
+            db.execute(delete(ForecastPoint).where(ForecastPoint.run_id.in_(demo_ids)))
+            db.execute(delete(ForecastRun).where(ForecastRun.id.in_(demo_ids)))
+            db.commit()
+        has_run = db.scalar(select(ForecastRun.id).limit(1)) is not None
+    if not has_run and (TRAINING_OUTPUTS_DIR / "forecast_30d.csv").exists():
+        import_bundle(TRAINING_OUTPUTS_DIR)
 
 
 @app.get("/api/health", response_model=HealthResponse, tags=["system"])
@@ -47,7 +64,7 @@ def entities(db: Session = Depends(get_db)):
 
 @app.get("/api/dashboard", response_model=DashboardResponse, tags=["forecast"])
 def dashboard(
-    horizon_days: int = Query(default=16, ge=1, le=90),
+    horizon_days: int = Query(default=30, ge=1, le=90),
     store_nbr: int | None = Query(default=None, ge=1),
     family: str | None = Query(default=None, min_length=1, max_length=120),
     db: Session = Depends(get_db),

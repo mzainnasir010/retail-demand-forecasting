@@ -29,7 +29,7 @@ function formatDate(value: string, short = false) {
 
 function App() {
   const [section, setSection] = useState<Section>("overview");
-  const [horizon, setHorizon] = useState(16);
+  const [horizon, setHorizon] = useState(30);
   const [store, setStore] = useState<number | null>(null);
   const [family, setFamily] = useState<string | null>(null);
   const [data, setData] = useState<DashboardData | null>(null);
@@ -106,13 +106,6 @@ function App() {
         </header>
 
         <div className="page-content">
-          {data?.mode === "demo" && (
-            <div className="demo-banner">
-              <span className="demo-dot" />
-              <span><strong>Sample data</strong> — preview only. Import your Kaggle run when training is complete.</span>
-              <a href="http://localhost:8000/docs" target="_blank" rel="noreferrer">API docs <span>↗</span></a>
-            </div>
-          )}
           <div className="page-heading">
             <div>
               <div className="eyebrow">RETAIL · DAILY SALES</div>
@@ -150,7 +143,7 @@ function App() {
                   </select><CaretDown size={14} />
                 </label>
                 <div className="filter-spacer" /><span className="horizon-label">Forecast</span>
-                {[7, 16].map((days) => (
+                {[7, 14, 30].map((days) => (
                   <button key={days} className={horizon === days ? "horizon-chip selected" : "horizon-chip"} onClick={() => setHorizon(days)}>{days} days</button>
                 ))}
               </div>
@@ -241,7 +234,7 @@ function RankingList({ data }: { data: DashboardData }) {
   return (
     <div className="ranking-list">
       {data.rankings.map((item, index) => (
-        <div className="ranking-row" key={item.family}><span className="rank-number">{String(index + 1).padStart(2, "0")}</span><span className="rank-name">{item.family}</span><div className="rank-track"><span style={{ width: Math.max(4, item.share_pct) + "%" }} /></div><strong>{compact.format(item.forecast)}</strong><small>{item.share_pct}%</small></div>
+        <div className="ranking-row" key={item.family}><span className="rank-number">{String(index + 1).padStart(2, "0")}</span><span className="rank-name">{item.family}</span><div className="rank-track"><span style={{ width: Math.max(4, item.share_pct) + "%" }} /></div><strong>{compact.format(item.forecast)}</strong><small>{item.change_pct == null ? `${item.share_pct}%` : `${item.change_pct > 0 ? "+" : ""}${item.change_pct.toFixed(1)}%`}</small></div>
       ))}
       {!data.rankings.length && <div className="empty-inline">No forecast categories are available.</div>}
     </div>
@@ -268,6 +261,7 @@ function Performance({ data }: { data: DashboardData }) {
         ) : <div className="empty-state"><Gauge size={26} /><strong>Model comparison will appear here</strong><p>Import a Kaggle bundle containing rolling-window scores to show held-out comparisons.</p></div>}
       </section>
       <div className="metric-grid">{data.metrics.map((item) => <article className="metric-card" key={item.label}><span>{item.label}</span><strong>{formatValue(item.value, item.unit)}</strong><small>{item.detail}</small></article>)}</div>
+      <section className="panel performance-panel"><div className="panel-heading"><div><h2>Evaluation reports</h2><p>Figures exported from the final Kaggle run</p></div></div><div className="report-figures">{data.figures.map((file) => <figure key={file}><img src={`/api/artifacts/${file}`} alt={file.split("/").pop()?.replace(/_/g, " ").replace(".png", "") ?? "Model evaluation figure"} /><figcaption>{file.split("/").pop()?.replace(/_/g, " ").replace(".png", "")}</figcaption></figure>)}</div></section>
       <aside className="method-note"><WarningCircle size={18} /><p>Choose using validation performance and stability. Held-out test windows provide a final check and should not be used to tune the model.</p></aside>
     </div>
   );
@@ -285,6 +279,7 @@ function Insights({ data }: { data: DashboardData }) {
         ))}</div>
       </section>
       <section className="panel ranking-panel insight-ranking"><div className="panel-heading"><div><h2>Expected demand by family</h2><p>Selected horizon · forecast units</p></div></div><RankingList data={data} /></section>
+      {data.family_outlook.length > 0 && <section className="panel performance-panel"><div className="panel-heading"><div><h2>30-day family outlook</h2><p>Forecast volume compared with the previous 30 days</p></div></div><div className="table-scroll"><table className="data-table"><thead><tr><th>Family</th><th>Previous 30 days</th><th>Next 30 days</th><th>Change</th></tr></thead><tbody>{data.family_outlook.map((row) => <tr key={row.family}><td>{row.family}</td><td>{number.format(row.last30_actual)}</td><td>{number.format(row.next30_forecast)}</td><td>{row.change_pct > 0 ? "+" : ""}{row.change_pct.toFixed(1)}%</td></tr>)}</tbody></table></div></section>}
       <aside className="method-note"><WarningCircle size={18} /><p>Inventory risk and reorder quantities need on-hand stock and supplier lead-time data. This dashboard does not infer those values.</p></aside>
     </div>
   );

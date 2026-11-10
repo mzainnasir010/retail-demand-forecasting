@@ -50,4 +50,9 @@ class DashboardResponse(BaseModel):
     insights: list[Insight]
     model_comparison: list[dict]
     rankings: list[dict]
+    family_outlook: list[dict]
+    figures: list[str]
+    business_insights: dict
+    run_metadata: dict
+    cleaning_log: dict
     entities: EntityOptions

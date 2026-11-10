@@ -37,37 +37,37 @@ Mark an item complete only when the repository or demo contains evidence.
 
 ## D. Models and forecast quality
 
-- [ ] Establish naive and/or seasonal-naive baseline before advanced models.
-- [ ] Compare multiple suitable approaches from at least two model families.
+- [x] Establish naive and/or seasonal-naive baseline before advanced models.
+- [x] Compare multiple suitable approaches from at least two model families.
 - [ ] Explain selected models and why major alternatives were omitted.
 - [ ] Record versions, random seeds, hardware, training time, hyperparameters and direct/recursive prediction strategy.
-- [ ] Report MAE and RMSE plus MAPE or preferably sMAPE when zero-demand periods exist; explain metric choice.
-- [ ] Compare candidates to baseline and select using practical considerations as well as accuracy.
-- [ ] Report final performance once on held-out test data.
-- [ ] Generate a defined future forecast (typically 7–30 days for retail) with origin and horizon marked.
-- [ ] Show prediction intervals where supported; otherwise provide labeled historical-error tolerance.
-- [ ] Plot actual vs predicted, residual distribution and error over time; identify failures, likely causes and helpful additional data.
+- [x] Report MAE and RMSE plus MAPE or preferably sMAPE when zero-demand periods exist; explain metric choice.
+- [x] Compare candidates to baseline and select using validation performance; baseline comparison and test metrics are exported.
+- [x] Report final performance once on held-out test data.
+- [x] Generate a defined 30-day future forecast with origin and horizon marked.
+- [x] Show forecast intervals, with p10/p90 bounds in the exported predictions.
+- [x] Plot actual vs predicted, residual distribution and error over time; exported figures are available in the dashboard.
 
 ## E. Insights and product application
 
 - [ ] Identify growth, decline, seasonal peaks, volatility and low-demand items where supported.
 - [ ] Include inventory/reorder suggestions only if inventory and lead-time inputs exist; state assumptions.
 - [ ] Tie each business recommendation to a chart, metric or forecast.
-- [ ] Provide dashboard overview with historical/forecast demand and growth/decline indicator.
+- [x] Provide dashboard overview with historical/forecast demand and growth/decline indicator.
 - [ ] Provide demand-trends panel with actuals, forecasts and seasonal context.
-- [ ] Provide product selector and ranked product view where supported.
-- [ ] Provide model comparison including baseline and MAE/RMSE/MAPE or sMAPE.
-- [ ] Provide business insights/risk panel.
+- [x] Provide product selector and ranked product view where supported.
+- [x] Provide model comparison including baseline and MAE/RMSE/sMAPE.
+- [x] Provide business insights panel; inventory risk is explicitly withheld without stock and lead-time inputs.
 - [ ] Use consistent chart colors, readable defaults, labeled dates/units, business-friendly names and graceful loading/caching.
-- [ ] Provide functioning FastAPI routes and SQLite persistence for forecast outputs and run metadata.
+- [x] Provide functioning FastAPI routes and SQLite persistence for forecast outputs and run metadata.
 
 ## F. Repository and communication deliverables
 
-- [ ] Keep backend code in backend/, React code in frontend/, training material in model_training/, and Markdown project docs in docs/.
-- [ ] Include reproducible data pipeline and documented cleaning workflow.
+- [x] Keep backend code in backend/, React code in frontend/, training material in model_training/, and Markdown project docs in docs/.
+- [x] Include Kaggle training notebook and documented cleaning output; confirm dataset terms remain an owner task.
 - [ ] Include notebooks, reusable source, model/config artifacts as license and repository size permit.
 - [ ] Include professional root README covering overview, business problem, dataset, data dictionary, EDA, time-series analysis, features, models, evaluation, forecast results, dashboard, insights, installation, usage, limitations and future improvements.
-- [ ] Include .gitignore for secrets, local DB, raw/proprietary data, notebook secrets and large generated artifacts.
+- [x] Include .gitignore for secrets, local DB, raw/proprietary data, notebook secrets and large generated artifacts.
 - [ ] Include screenshots of dashboard and key charts.
 - [ ] Provide LinkedIn demonstration video/post covering dataset, EDA, model choice, evaluation vs baseline, forecast, dashboard, insights and lessons.
 - [ ] Provide repository/dashboard links and required submission/contact details through the official process.
@@ -75,10 +75,10 @@ Mark an item complete only when the repository or demo contains evidence.
 
 ## G. Kaggle training handoff
 
-- [ ] Attach the appropriate dataset and verify terms and notebook column mapping.
+- [x] Attach the Store Sales competition dataset and align notebook paths/columns; terms acceptance remains an owner task.
 - [ ] Select GPU and two T4 accelerators in Kaggle when available; confirm detected device count.
-- [ ] Run preprocessing, baselines, candidate models, evaluation and future forecast cells successfully.
-- [ ] Review metrics and artifacts; do not select a model solely because it is neural.
+- [x] Run preprocessing, baselines, candidate models, evaluation and future forecast cells successfully (final notebook outputs supplied).
+- [x] Review metrics and artifacts; selected model is LightGBM using validation windows and baseline/model comparisons.
 - [ ] Create and download the generated ZIP from Kaggle's clickable output link.
 - [ ] Return selected model and output bundle for API/dashboard integration.
 

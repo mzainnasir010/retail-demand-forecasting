@@ -4,9 +4,9 @@ This is the handoff log. Update it whenever functionality is implemented so anot
 
 ## Current status
 
-- **Stage:** FastAPI/SQLite backend and React dashboard implemented. App starts in sample-data mode until the Kaggle run is imported.
+- **Stage:** Final Kaggle notebook outputs integrated into FastAPI/SQLite and React dashboard; mock-data mode removed.
 - **Last updated:** 2026-11-10
-- **Next action:** Import the next Kaggle bundle once it is ready. The application can already run using sample data in the meantime.
+- **Next action:** Launch both local servers and review the dashboard. Refresh output data by running the importer from backend when a new Kaggle run is available.
 
 ## Completed
 
@@ -27,15 +27,22 @@ This is the handoff log. Update it whenever functionality is implemented so anot
 - [x] Built the React + Vite dashboard with overview, forecast chart, store/family filters, model comparison and demand insight views.
 - [x] Connected the dashboard to the FastAPI service and added loading, API error and sample-data states.
 - [x] Added responsive layouts and local API proxy configuration.
+- [x] Replaced the earlier notebook with the user's final `model_training/demand-forecasting-notebook.ipynb`.
+- [x] Imported the final 30-day forecast and rolling-window actuals output formats, along with metrics, family outlook, cleaning metadata, business insights, and figure paths.
+- [x] Connected the API to `model_training/outputs`, enabled first-start import, served exported figures, and removed mock-data seeding and UI messaging.
+- [x] Added 7/14/30-day dashboard horizon controls, final-run metrics, family outlook and evaluation figures.
+- [x] Imported the local output folder and confirmed the dashboard response validates with trained model metrics, 120 chart points, 33 family outlook rows and all four exported figures.
+- [x] Confirmed backend modules compile and the React production build succeeds.
 
 ## Not started
 
 - [ ] Dataset attached, source terms verified, and data profile recorded.
 - [ ] EDA, cleaning decisions, decomposition and data dictionary completed on the actual dataset.
-- [ ] Model training completed and selected model/artifacts reviewed.
+- [x] Model training completed and selected model/artifacts reviewed (final LightGBM notebook outputs supplied by user).
 - [x] FastAPI backend and SQLite persistence implemented.
 - [x] React dashboard implemented and connected to backend.
-- [ ] Final README, screenshots, demo and submission details completed.
+- [x] Updated README for final output layout and local startup/import workflow.
+- [ ] Screenshots, demo and submission details completed.
 
 ## Handoff notes
 
@@ -45,4 +52,6 @@ This is the handoff log. Update it whenever functionality is implemented so anot
 - Kaggle notebook code can create a ZIP in /kaggle/working and display a clickable file link. A browser download requires the user to click that link; a remote notebook cannot silently write files onto the user's local device.
 - The two-T4 setting is not needed for the revised tree-model comparison; LightGBM/XGBoost acceleration depends on the Kaggle package build.
 - Backend commands and route behavior are documented in the root README. Frontend dependencies are locked in frontend/package-lock.json.
+- The live Kaggle outputs are present under `model_training/outputs/`; generated CSVs and model artifacts are git-ignored due to their size. The local app auto-imports them on first launch. A fresh clone needs the output folder supplied separately.
+- The final notebook/output bundle was supplied already run by the user; this implementation session validated/imported those output files and did not repeat GPU training.
 - Do not commit credentials, Kaggle tokens, raw data with unclear terms, or large model binaries.

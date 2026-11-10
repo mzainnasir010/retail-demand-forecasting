@@ -103,6 +103,27 @@ def dashboard_data(
     ]
     selected_forecasts = [row for row in forecasts if row.date in selected_future]
     insights = _make_insights(selected_forecasts, horizon_days)
+    business = metrics_blob.get("business_insights", {})
+    if store_nbr is None and family is None and business:
+        peak_day = business.get("expected_peak_day")
+        peak_units = business.get("expected_peak_units")
+        if peak_day:
+            insights.insert(0, {
+                "kind": "positive", "title": "Expected peak day",
+                "detail": f"The model projects the highest total demand on {peak_day}.",
+                "value": f"{float(peak_units):,.0f} units" if peak_units is not None else "",
+            })
+        for item in business.get("top_growth_families", [])[:2]:
+            insights.append({"kind": "positive", "title": f"{item['family']} outlook",
+                "detail": "Forecast change versus the previous 30 days.",
+                "value": f"+{float(item['change_pct']):.1f}%"})
+        for item in business.get("top_decline_families", [])[:2]:
+            insights.append({"kind": "caution", "title": f"{item['family']} outlook",
+                "detail": "Forecast change versus the previous 30 days.",
+                "value": f"{float(item['change_pct']):.1f}%"})
+    outlook = metrics_blob.get("family_outlook", [])
+    if store_nbr is not None or family is not None:
+        outlook = []
     return {
         "mode": run.mode, "model_name": run.model_name, "run_id": run.id,
         "generated_at": run.created_at.isoformat(), "horizon_days": horizon_days,
@@ -116,7 +137,12 @@ def dashboard_data(
         },
         "series": series, "metrics": metrics, "insights": insights,
         "model_comparison": model_comparison,
-        "rankings": _family_rankings(selected_forecasts),
+        "rankings": _family_rankings(selected_forecasts, outlook),
+        "family_outlook": outlook,
+        "figures": metrics_blob.get("figure_files", []),
+        "business_insights": business,
+        "run_metadata": metrics_blob.get("run_metadata", {}),
+        "cleaning_log": metrics_blob.get("cleaning_log", {}),
         "entities": entity_options(db, run.id),
     }
 
@@ -147,7 +173,7 @@ def _number(value) -> float | None:
 
 def _make_insights(rows: list[ForecastPoint], horizon_days: int) -> list[dict]:
     if not rows:
-        return [{"kind": "neutral", "title": "Forecast not loaded", "detail": "Add a Kaggle forecast bundle to replace the sample view."}]
+        return [{"kind": "neutral", "title": "No rows for this selection", "detail": "Choose another store or product family to view available results."}]
     by_family: dict[str, float] = defaultdict(float)
     by_store: dict[int, float] = defaultdict(float)
     for row in rows:
@@ -189,14 +215,15 @@ def _model_comparison(metrics: dict, run: ForecastRun) -> list[dict]:
     ]
 
 
-def _family_rankings(rows: list[ForecastPoint]) -> list[dict]:
+def _family_rankings(rows: list[ForecastPoint], outlook: list[dict] | None = None) -> list[dict]:
     totals: dict[str, float] = defaultdict(float)
     for row in rows:
         totals[row.family] += row.forecast
     grand_total = sum(totals.values())
     return [
         {"family": family, "forecast": round(value, 2),
-         "share_pct": round(value / grand_total * 100, 1) if grand_total else 0}
+         "share_pct": round(value / grand_total * 100, 1) if grand_total else 0,
+         "change_pct": next((row.get("change_pct") for row in (outlook or []) if row.get("family") == family), None)}
         for family, value in sorted(totals.items(), key=lambda item: item[1], reverse=True)[:8]
     ]
 
@@ -208,6 +235,7 @@ def _empty_dashboard(run, horizon_days, store_nbr, family, entities):
         "selected_store": store_nbr, "selected_family": family,
         "summary": {"actual_total": 0, "average_daily_actual": 0, "forecast_total": 0, "growth_pct": None, "history_days": 0},
         "series": [], "metrics": [], "insights": [],
-        "model_comparison": [], "rankings": [],
+        "model_comparison": [], "rankings": [], "family_outlook": [], "figures": [],
+        "business_insights": {}, "run_metadata": {}, "cleaning_log": {},
         "entities": entities,
     }
