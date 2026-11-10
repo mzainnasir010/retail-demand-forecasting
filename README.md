@@ -14,12 +14,9 @@ A complete retail demand forecasting application for forecasting daily sales by 
 
 ## Demo video
 
-Place the demo recording at `docs/assets/demo.mp4`. The video is muted so browsers can start playback when the pointer enters the video; it pauses when the pointer leaves. The controls remain available for manual playback.
+The player below embeds the demo from Google Drive, so it can be watched without adding the video file to the repository. Hover over the player to start playback; move the pointer away to stop it. Player controls are also available.
 
-<video width="100%" controls muted playsinline preload="metadata" onmouseenter="this.play()" onmouseleave="this.pause()">
-  <source src="docs/assets/demo.mp4" type="video/mp4">
-  Your browser does not support embedded video. Open <a href="docs/assets/demo.mp4">the demo video</a> directly.
-</video>
+<iframe src="https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview" width="100%" height="480" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="Retail demand forecasting demo" onmouseenter="this.src='https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview?autoplay=1'" onmouseleave="this.src='https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview'"></iframe>
 
 ## Notebook output figures
 
@@ -27,19 +24,19 @@ The images below are produced by the training notebook and stored in `model_trai
 
 ### Held-out actuals and forecasts
 
-![Held-out actual and forecast totals](model_training/outputs/figures/test_actual_vs_forecast.png)
+[![Held-out actual and forecast totals](https://github.com/mzainnasir010/retail-demand-forecasting/raw/main/model_training/outputs/figures/test_actual_vs_forecast.png)](https://github.com/mzainnasir010/retail-demand-forecasting/blob/main/model_training/outputs/figures/test_actual_vs_forecast.png)
 
 ### Residuals over time
 
-![Forecast residuals over time](model_training/outputs/figures/residuals_over_time.png)
+[![Forecast residuals over time](https://github.com/mzainnasir010/retail-demand-forecasting/raw/main/model_training/outputs/figures/residuals_over_time.png)](https://github.com/mzainnasir010/retail-demand-forecasting/blob/main/model_training/outputs/figures/residuals_over_time.png)
 
 ### Validation model comparison
 
-![Validation MAE by model](model_training/outputs/figures/validation_mae_by_model.png)
+[![Validation MAE by model](https://github.com/mzainnasir010/retail-demand-forecasting/raw/main/model_training/outputs/figures/validation_mae_by_model.png)](https://github.com/mzainnasir010/retail-demand-forecasting/blob/main/model_training/outputs/figures/validation_mae_by_model.png)
 
 ### Residual distribution
 
-![Validation residual distribution](model_training/outputs/figures/residual_distribution.png)
+[![Validation residual distribution](https://github.com/mzainnasir010/retail-demand-forecasting/raw/main/model_training/outputs/figures/residual_distribution.png)](https://github.com/mzainnasir010/retail-demand-forecasting/blob/main/model_training/outputs/figures/residual_distribution.png)
 
 ## Dataset
 
