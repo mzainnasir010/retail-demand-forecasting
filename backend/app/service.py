@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import date, timedelta
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from .models import DailyActual, ForecastPoint, ForecastRun
 
@@ -43,6 +43,14 @@ def dashboard_data(
         actual_query = actual_query.where(DailyActual.family == family)
         forecast_query = forecast_query.where(ForecastPoint.family == family)
 
+    latest_query = select(func.max(DailyActual.date)).where(DailyActual.run_id == run.id)
+    if store_nbr is not None:
+        latest_query = latest_query.where(DailyActual.store_nbr == store_nbr)
+    if family is not None:
+        latest_query = latest_query.where(DailyActual.family == family)
+    latest_actual_date = db.scalar(latest_query)
+    if latest_actual_date is not None:
+        actual_query = actual_query.where(DailyActual.date >= latest_actual_date - timedelta(days=89))
     actuals = db.scalars(actual_query.order_by(DailyActual.date)).all()
     forecasts = db.scalars(forecast_query.order_by(ForecastPoint.date)).all()
     if not actuals and not forecasts:
@@ -62,7 +70,7 @@ def dashboard_data(
         if row.upper is not None:
             item["upper"] = (item["upper"] or 0.0) + row.upper
 
-    latest_actual_date = max((r.date for r in actuals), default=None)
+    latest_actual_date = max((r.date for r in actuals), default=latest_actual_date)
     future_dates = sorted(d for d in by_date if latest_actual_date is None or d > latest_actual_date)
     selected_future = set(future_dates[:horizon_days])
     history_dates = sorted(d for d in by_date if latest_actual_date is not None and d <= latest_actual_date)
