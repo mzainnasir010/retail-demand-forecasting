@@ -18,6 +18,8 @@ The player below embeds the demo from Google Drive, so it can be watched without
 
 <iframe src="https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview" width="100%" height="480" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="Retail demand forecasting demo" onmouseenter="this.src='https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview?autoplay=1'" onmouseleave="this.src='https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview'"></iframe>
 
+If your Markdown viewer blocks embedded players, [open the demo in Google Drive](https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/view?usp=sharing).
+
 ## Notebook output figures
 
 The images below are produced by the training notebook and stored in `model_training/outputs/figures/`.
