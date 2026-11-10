@@ -10,6 +10,11 @@ data/raw/
 data/processed/
 models/
 outputs/
+!model_training/outputs/
+model_training/outputs/*
+!model_training/outputs/figures/
+model_training/outputs/figures/*
+!model_training/outputs/figures/*.png
 demand_forecast_output/
 backend/data/
 backend/artifacts/

@@ -14,15 +14,11 @@ A complete retail demand forecasting application for forecasting daily sales by 
 
 ## Demo video
 
-The player below embeds the demo from Google Drive, so it can be watched without adding the video file to the repository. Hover over the player to start playback; move the pointer away to stop it. Player controls are also available.
-
-<iframe src="https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview" width="100%" height="480" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="Retail demand forecasting demo" onmouseenter="this.src='https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview?autoplay=1'" onmouseleave="this.src='https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/preview'"></iframe>
-
-If your Markdown viewer blocks embedded players, [open the demo in Google Drive](https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/view?usp=sharing).
+Watch the [project demo on Google Drive](https://drive.google.com/file/d/1DLao9oPVuTACck9FJ3ah5UX3Up4ZpXyT/view?usp=sharing). GitHub README pages do not render Google Drive iframe embeds, so this link opens the Drive video page instead of playing inline. To make the video play inside the README, upload the MP4 to GitHub or another host that provides a direct video file URL and supports embedding.
 
 ## Notebook output figures
 
-The images below are produced by the training notebook and stored in `model_training/outputs/figures/`.
+The images below are produced by the training notebook and stored in `model_training/outputs/figures/`. Their filenames are `test_actual_vs_forecast.png`, `residuals_over_time.png`, `validation_mae_by_model.png`, and `residual_distribution.png`. To display on GitHub, these image files must also be committed to the repository; generated `outputs/` files are ignored by the current `.gitignore`.
 
 ### Held-out actuals and forecasts
 
