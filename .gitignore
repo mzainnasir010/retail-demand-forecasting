@@ -1,0 +1,28 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local data and generated model artifacts
+data/raw/
+data/processed/
+models/
+outputs/
+demand_forecast_output/
+*.pkl
+*.pt
+*.pth
+*.zip
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
